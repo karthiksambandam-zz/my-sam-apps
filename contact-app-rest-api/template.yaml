@@ -1,0 +1,297 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Rest API for storing contact information using API Gateway as a proxy for DynamoDB.
+Resources:
+  APIGWDynamoProxyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: apigateway.amazonaws.com
+          Action: sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+      - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+  ContactsTable:
+    Type: AWS::Serverless::SimpleTable
+  ContactsAPI:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Variables:
+        contacts_tbl:
+          Ref: ContactsTable
+      DefinitionBody:
+        swagger: '2.0'
+        info:
+          version: '2017-10-24T07:13:31Z'
+          title: ContactsAPI
+        schemes:
+        - https
+        paths:
+          "/contact":
+            options:
+              consumes:
+              - application/json
+              produces:
+              - application/json
+              responses:
+                '200':
+                  description: 200 response
+                  schema:
+                    "$ref": "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: '200'
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          "/contact/list":
+            get:
+              consumes:
+              - application/json
+              produces:
+              - application/json
+              responses:
+                '200':
+                  description: 200 response
+                  schema:
+                    "$ref": "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              security:
+              - sigv4: []
+              x-amazon-apigateway-integration:
+                credentials:
+                  Fn::GetAtt:
+                  - APIGWDynamoProxyRole
+                  - Arn
+                responses:
+                  default:
+                    statusCode: '200'
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: |-
+                    {"TableName":"$stageVariables.contacts_tbl",
+                    "ProjectionExpression":"id, fullname, phone"
+                    }
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:dynamodb:action/Scan'
+                passthroughBehavior: never
+                httpMethod: POST
+                type: aws
+            options:
+              consumes:
+              - application/json
+              produces:
+              - application/json
+              responses:
+                '200':
+                  description: 200 response
+                  schema:
+                    "$ref": "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: '200'
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          "/contact/{id}":
+            get:
+              consumes:
+              - application/json
+              produces:
+              - application/json
+              parameters:
+              - name: id
+                in: path
+                required: true
+                type: string
+              responses:
+                '200':
+                  description: 200 response
+                  schema:
+                    "$ref": "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              security:
+              - sigv4: []
+              x-amazon-apigateway-integration:
+                credentials:
+                  Fn::GetAtt:
+                  - APIGWDynamoProxyRole
+                  - Arn
+                responses:
+                  default:
+                    statusCode: '200'
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: |-
+                    {"TableName": "$stageVariables.contacts_tbl",
+                     "Key":{"id":{"S":"$input.params('id')"}}
+                    }
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:dynamodb:action/GetItem'
+                passthroughBehavior: never
+                httpMethod: POST
+                type: aws
+            post:
+              consumes:
+              - application/json
+              produces:
+              - application/json
+              parameters:
+              - name: id
+                in: path
+                required: true
+                type: string
+              responses:
+                '200':
+                  description: 200 response
+                  schema:
+                    "$ref": "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              security:
+              - sigv4: []
+              x-amazon-apigateway-integration:
+                credentials:
+                  Fn::GetAtt:
+                  - APIGWDynamoProxyRole
+                  - Arn
+                responses:
+                  default:
+                    statusCode: '200'
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: |
+                    ##  See http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html
+                    ##  This template will pass through all parameters including path, querystring, header, stage variables, and context through to the integration endpoint via the body/payload
+                    #set($allParams = $input.params())
+                    {
+                    "Item" : $input.json('$'),
+                    "TableName":"$stageVariables.contacts_tbl"
+                    }
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:dynamodb:action/PutItem'
+                passthroughBehavior: never
+                httpMethod: POST
+                type: aws
+            delete:
+              consumes:
+              - application/json
+              produces:
+              - application/json
+              parameters:
+              - name: id
+                in: path
+                required: true
+                type: string
+              responses:
+                '200':
+                  description: 200 response
+                  schema:
+                    "$ref": "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              security:
+              - sigv4: []
+              x-amazon-apigateway-integration:
+                credentials:
+                  Fn::GetAtt:
+                  - APIGWDynamoProxyRole
+                  - Arn
+                responses:
+                  default:
+                    statusCode: '200'
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: |-
+                    {"TableName": "$stageVariables.contacts_tbl",
+                     "Key":{"id":{"S":"$input.params('id')"}}
+                    }
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:dynamodb:action/DeleteItem'
+                passthroughBehavior: never
+                httpMethod: POST
+                type: aws
+            options:
+              consumes:
+              - application/json
+              produces:
+              - application/json
+              responses:
+                '200':
+                  description: 200 response
+                  schema:
+                    "$ref": "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: '200'
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,POST,GET,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+        securityDefinitions:
+          sigv4:
+            type: apiKey
+            name: Authorization
+            in: header
+            x-amazon-apigateway-authtype: awsSigv4
+        definitions:
+          Empty:
+            type: object
+            title: Empty Schema
+Outputs:
+  RestAPIURI:
+    Value: !Sub "https://${ContactsAPI}.execute-api.${AWS::Region}.amazonaws.com/Prod/contact"
+  TableName:
+    Value:
+      Ref: ContactsTable
