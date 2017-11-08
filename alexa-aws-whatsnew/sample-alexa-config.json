@@ -1,0 +1,351 @@
+{
+  "languageModel": {
+    "types": [
+      {
+        "name": "LIST_OF_SERVICE",
+        "values": [
+          {
+            "id": null,
+            "name": {
+              "value": "config",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "athena",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "elasticsearch service",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "cloudformation",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "k.m.s",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "gamelift",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "quicksight",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "e.f.s",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "elastic beanstalk",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "glacier",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "s. three",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "storage gateway",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "direct connect",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "data migration service",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "server migration service",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "cloudtrail",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "marketplace",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "appstream 2.0",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "codecommit",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "codebuild",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "codedeploy",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "r.d.s",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "organizations",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "rekognition",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "redshift",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "x ray",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "v.p.c",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "lex",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "polly",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "alexa",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "codepipeline",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "codestar",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "connect",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "i.a.m",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "e. c. two",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "route fifty three",
+              "synonyms": []
+            }
+          }
+        ]
+      }
+    ],
+    "intents": [
+      {
+        "name": "AMAZON.CancelIntent",
+        "samples": []
+      },
+      {
+        "name": "AMAZON.HelpIntent",
+        "samples": []
+      },
+      {
+        "name": "AMAZON.StopIntent",
+        "samples": []
+      },
+      {
+        "name": "Next_item",
+        "samples": [
+          "next",
+          "go to next item",
+          "go to next feature"
+        ],
+        "slots": []
+      },
+      {
+        "name": "Previous_item",
+        "samples": [
+          "go back",
+          "go to previous item",
+          "go to previous feature"
+        ],
+        "slots": []
+      },
+      {
+        "name": "Repeat_categories",
+        "samples": [
+          "repeat it"
+        ],
+        "slots": []
+      },
+      {
+        "name": "Select_category",
+        "samples": [
+          "tell me about {Category}"
+        ],
+        "slots": [
+          {
+            "name": "Category",
+            "type": "LIST_OF_SERVICE"
+          }
+        ]
+      },
+      {
+        "name": "Tell_more",
+        "samples": [
+          "more"
+        ],
+        "slots": []
+      },
+      {
+        "name": "Whatsnew_AWS",
+        "samples": [
+          "what is new",
+          "what is new in A W S",
+          "What is launched in A W S",
+          "What new features launched in A W S",
+          "What is launched recently in A W S",
+          "What is the new feature launched in A W S"
+        ],
+        "slots": []
+      },
+      {
+        "name": "Whatsnew_AWS_Date",
+        "samples": [
+          "what is new from {Date}",
+          "what is new {Date}",
+          "what is new AWS {Date}",
+          "what is new in A W S {Date}",
+          "refine search from {Date}",
+          "refine search for {Date}"
+        ],
+        "slots": [
+          {
+            "name": "Date",
+            "type": "AMAZON.DATE"
+          }
+        ]
+      }
+    ],
+    "invocationName": "cloud assist"
+  }
+}
