@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: >-
+  Approval workflow for service catalog product launch.
+  This template creates lambda functions along with SNS subscription.
+Metadata:
+  LICENSE: >-
+    Copyright 2017 Amazon Web Services, Inc. or its affiliates. All Rights
+    Reserved. This file is licensed to you under the AWS Customer Agreement (the
+    "License"). You may not use this file except in compliance with the License.
+    A copy of the License is located at http://aws.amazon.com/agreement/ . This
+    file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+    ANY KIND, express or implied. See the License for the specific language
+    governing permissions and limitations under the License.
+Parameters:
+  EmailID:
+    AllowedPattern: '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'
+    ConstraintDescription: This is not a valid email id.
+    Default: "abc.xyz@email.com"
+    Description: Enter Approvers Email ID
+    MaxLength: '64'
+    MinLength: '1'
+    Type: String
+Resources:
+  ApprovalNotificationTopic:
+    Type: "AWS::SNS::Topic"
+    Properties:
+      Subscription:
+        -
+          Endpoint: !Ref EmailID
+          Protocol: email
+      TopicName: "CFNApprovalNotificationTopic"
+  ApprovalFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: ApprovalFunction.lambda_handler
+      Runtime: python3.6
+      CodeUri: s3://<bucket>/ApprovalFunction.zip
+      Events:
+          approveAction:
+            Type: Api
+            Properties:
+              Path: /approveStack
+              Method: get
+  SNSNotificationLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: NotificationFunction.lambda_handler
+      Runtime: python3.6
+      Environment:
+        Variables:
+          topic_arn: !Ref ApprovalNotificationTopic
+          approval_url: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Stage/approveStack
+      CodeUri: s3://<bucket>/NotificationFunction.zip
+      Policies:
+        - AmazonSNSFullAccess
+Outputs:
+  LambdaARN:
+    Description: Lambda function ARN to notify approver
+    Value: !GetAtt SNSNotificationLambda.Arn
