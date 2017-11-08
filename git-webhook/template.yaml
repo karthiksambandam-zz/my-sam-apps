@@ -46,7 +46,7 @@ Resources:
       Runtime: python2.7
       MemorySize: 128
       Timeout: 30
-      CodeUri: s3://git2s3-us-east-1-7551-0526-2051/sam-apps/git-webhook/lambda_function.zip
+      CodeUri: s3://<bucket>/lambda_function.zip
       Environment:
         Variables:
           outputbucket:
