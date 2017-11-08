@@ -1,0 +1,127 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Manage EBS Snapshot schedule and cleanup using Cloudwatch events, Lambda
+  and Resource tags.
+Parameters:
+  CronExpression:
+    Description: 'Provide the cron expression to schedule Snapshot creation:'
+    Type: String
+    Default: 0 22 * * ? *
+    AllowedPattern: "^\\s*($|#|\\w+\\s*=|(\\?|\\*|(?:[0-5]?\\d)(?:(?:-|/|\\,)(?:[0-5]?\\d))?(?:,(?:[0-5]?\\d)(?:(?:-|/|\\,)(?:[0-5]?\\d))?)*)\\s+(\\?|\\*|(?:[0-5]?\\d)(?:(?:-|/|\\,)(?:[0-5]?\\d))?(?:,(?:[0-5]?\\d)(?:(?:-|/|\\,)(?:[0-5]?\\d))?)*)\\s+(\\?|\\*|(?:[01]?\\d|2[0-3])(?:(?:-|/|\\,)(?:[01]?\\d|2[0-3]))?(?:,(?:[01]?\\d|2[0-3])(?:(?:-|/|\\,)(?:[01]?\\d|2[0-3]))?)*)\\s+(\\?|\\*|(?:0?[1-9]|[12]\\d|3[01])(?:(?:-|/|\\,)(?:0?[1-9]|[12]\\d|3[01]))?(?:,(?:0?[1-9]|[12]\\d|3[01])(?:(?:-|/|\\,)(?:0?[1-9]|[12]\\d|3[01]))?)*)\\s+(\\?|\\*|(?:[1-9]|1[012])(?:(?:-|/|\\,)(?:[1-9]|1[012]))?(?:L|W)?(?:,(?:[1-9]|1[012])(?:(?:-|/|\\,)(?:[1-9]|1[012]))?(?:L|W)?)*|\\?|\\*|(?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)(?:(?:-)(?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC))?(?:,(?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)(?:(?:-)(?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC))?)*)\\s+(\\?|\\*|(?:[0-6])(?:(?:-|/|\\,|#)(?:[0-6]))?(?:L)?(?:,(?:[0-6])(?:(?:-|/|\\,|#)(?:[0-6]))?(?:L)?)*|\\?|\\*|(?:MON|TUE|WED|THU|FRI|SAT|SUN)(?:(?:-)(?:MON|TUE|WED|THU|FRI|SAT|SUN))?(?:,(?:MON|TUE|WED|THU|FRI|SAT|SUN)(?:(?:-)(?:MON|TUE|WED|THU|FRI|SAT|SUN))?)*)(|\\s)+(\\?|\\*|(?:|\\d{4})(?:(?:-|/|\\,)(?:|\\d{4}))?(?:,(?:|\\d{4})(?:(?:-|/|\\,)(?:|\\d{4}))?)*))$"
+    ConstraintDescription: Malformed input-Parameter cron expression must match pattern
+  TagKey:
+    Description: 'Provide the volume tag key to filter the resources:'
+    Type: String
+    Default: Environment
+  TagValue:
+    Description: 'Provide the volume tag value to filter the resources:'
+    Type: String
+    Default: Prod
+  RetentionType:
+    Description: Select the type to expire the old Snapshot (either based on version
+      count or snapshot age)
+    Type: String
+    AllowedValues:
+    - ByDays
+    - ByCount
+    Default: ByCount
+  RetentionValue:
+    Description: 'Provide max number of snapshot versions or max number of days retention:'
+    Type: Number
+    Default: '5'
+Resources:
+  LambdaEBSManagerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: ebsmgnr-policy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - ec2:CreateSnapshot
+            - ec2:DeleteSnapshot
+            - ec2:DescribeSnapshotAttribute
+            - ec2:DescribeSnapshots
+            - ec2:DescribeVolumeAttribute
+            - ec2:DescribeVolumes
+            Resource: "*"
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource:
+            - arn:aws:logs:*:*:*
+  SnapshotCreatorLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: SnapshotCreatorLambda.handler
+      Role:
+        Fn::GetAtt:
+        - LambdaEBSManagerRole
+        - Arn
+      Runtime: python2.7
+      Timeout: 300
+      CodeUri: 's3://<bucket>/SnapshotCreatorLambda.zip'
+      Environment:
+        Variables:
+          tag_key:
+            Ref: TagKey
+          tag_value:
+            Ref: TagValue
+      Events:
+        SnapshotScheduler:
+          Type: Schedule
+          Properties:
+            Schedule:
+              Fn::Join:
+              - ''
+              - - cron(
+                - Ref: CronExpression
+                - ")"
+  SnapshotCleanupLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: SnapshotCleanupLambda.handler
+      Role:
+        Fn::GetAtt:
+        - LambdaEBSManagerRole
+        - Arn
+      Runtime: python2.7
+      Timeout: 300
+      CodeUri: 's3://<bucket>/SnapshotCleanupLambda.zip'
+      Environment:
+        Variables:
+          tag_key:
+            Ref: TagKey
+          tag_value:
+            Ref: TagValue
+          retention_type:
+            Ref: RetentionType
+          retention_value:
+            Ref: RetentionValue
+      Events:
+        SnapshotCleanupEvent:
+          Type: CloudWatchEvent
+          Properties:
+            Pattern:
+              source:
+              - aws.ec2
+              detail-type:
+              - EBS Snapshot Notification
+              detail:
+                event:
+                - createSnapshot
+                result:
+                - succeeded
