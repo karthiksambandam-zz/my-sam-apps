@@ -1,0 +1,82 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 3rd party git integration with S3
+Parameters:
+  GitToken:
+    NoEcho: 'true'
+    Description: Personal access token, needed for GitHub Enterprise and GitLab
+    Type: String
+    Default: ''
+    ConstraintDescription: this token must be generated from the git server/provider
+  OauthKey:
+    Description: OAuth2 Key needed for BitBucket only
+    Type: String
+    Default: ''
+    ConstraintDescription: this key must be generated from the git server/provider
+  OauthSecret:
+    NoEcho: 'true'
+    Description: OAuth2 Secret needed for BitBucket onlu
+    Type: String
+    Default: ''
+    ConstraintDescription: this secret must be generated from the git server/provider
+Conditions:
+  UseGitToken:
+    Fn::Not:
+    - Fn::Equals:
+      - Ref: GitToken
+      - ''
+  UseOauthKey:
+    Fn::Not:
+    - Fn::Equals:
+      - Ref: OauthKey
+      - ''
+  UseOauthSecret:
+    Fn::Not:
+    - Fn::Equals:
+      - Ref: OauthSecret
+      - ''
+Resources:
+  OutputBucket:
+    Type: AWS::S3::Bucket
+  ZipDlLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: lambda_function.lambda_handler
+      Runtime: python2.7
+      MemorySize: 128
+      Timeout: 30
+      CodeUri: s3://git2s3-us-east-1-7551-0526-2051/sam-apps/git-webhook/lambda_function.zip
+      Environment:
+        Variables:
+          outputbucket:
+            Ref: OutputBucket
+          gittoken:
+            Fn::If:
+            - UseGitToken
+            - Ref: GitToken
+            - Ref: AWS::NoValue
+          oauthkey:
+            Fn::If:
+            - UseOauthKey
+            - Ref: OauthKey
+            - Ref: AWS::NoValue
+          oauthsecret:
+            Fn::If:
+            - UseOauthSecret
+            - Ref: OauthSecret
+            - Ref: AWS::NoValue
+      Policies:
+        - AmazonS3FullAccess
+      Events:
+          zipdlAction:
+            Type: Api
+            Properties:
+              Path: /zipdl
+              Method: post
+Outputs:
+  ZipDownloadWebHookApi:
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Stage/zipdl"
+  OutputBucketName:
+    Value:
+      Ref: OutputBucket
