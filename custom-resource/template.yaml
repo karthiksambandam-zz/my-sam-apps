@@ -53,7 +53,9 @@ Resources:
           approval_url: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Stage/approveStack
       CodeUri: s3://<bucket>/NotificationFunction.zip
       Policies:
-        - AmazonSNSFullAccess
+        - SNSPublishMessagePolicy:
+            TopicName:
+              Fn::GetAtt: ["ApprovalNotificationTopic", "TopicName"]
 Outputs:
   LambdaARN:
     Description: Lambda function ARN to notify approver

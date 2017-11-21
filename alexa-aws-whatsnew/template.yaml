@@ -19,7 +19,9 @@ Resources:
     Properties:
       Handler: awsfeedparserlambda.lambda_handler
       Policies:
-        - AmazonDynamoDBFullAccess
+        - DynamoDBCrudPolicy:
+            TableName:
+              Ref: AWSLaunchDetailsTable
       Runtime: python2.7
       Timeout: 300
       CodeUri: 's3://<bucket>/code.zip'
@@ -44,7 +46,9 @@ Resources:
     Properties:
       Handler: alexaskill_whatsnew.lambda_handler
       Policies:
-        - AmazonDynamoDBFullAccess
+        - DynamoDBReadPolicy:
+            TableName:
+              Ref: AWSLaunchDetailsTable
       Runtime: python2.7
       Timeout: 300
       CodeUri: 's3://<bucket>/code.zip'

@@ -67,7 +67,9 @@ Resources:
             - Ref: OauthSecret
             - Ref: AWS::NoValue
       Policies:
-        - AmazonS3FullAccess
+        - S3CrudPolicy:
+             BucketName:
+               Ref: OutputBucket
       Events:
           zipdlAction:
             Type: Api
